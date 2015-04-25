@@ -7,10 +7,10 @@ The complete set of contributors may be found at https://expandjs.github.io/CONT
 -->
 
 <!--
-This component is used to parse an html or javascript file, extracting it's documentation.
+This element is used to parse an html or javascript file, extracting it's documentation.
 
-@component xp-doc-parser
-@description This component is used to parse an html or javascript file, extracting it's documentation.
+@element xp-doc-parser
+@description This element is used to parse an html or javascript file, extracting it's documentation.
 
 @dependency polymer Polymer/polymer#^0.5
 @dependency expandjs ExpandJS/expandjs
@@ -33,7 +33,7 @@ This component is used to parse an html or javascript file, extracting it's docu
     </template>
 
     <script>
-        XPComponent({
+        XPElement({
 
             /**
              * Parses the passed text.
@@ -368,10 +368,10 @@ This component is used to parse an html or javascript file, extracting it's docu
              *
              * @property entities
              * @type Array
-             * @default ["class", "component", "function", "mixin", "module"]
+             * @default ["class", "element", "function", "mixin", "module"]
              * @readonly
              */
-            entities: ['class', 'component', 'function', 'mixin', 'module'],
+            entities: ['class', 'element', 'function', 'mixin', 'module'],
 
             /**
              * A map of the plural pragma.

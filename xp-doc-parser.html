@@ -1,0 +1,403 @@
+<!--
+@license
+Copyright (c) 2015 The expand.js authors. All rights reserved.
+This code may only be used under the BSD style license found at https://expandjs.github.io/LICENSE.txt
+The complete set of authors may be found at https://expandjs.github.io/AUTHORS.txt
+The complete set of contributors may be found at https://expandjs.github.io/CONTRIBUTORS.txt
+-->
+
+<!--
+This component is used to parse an html or javascript file, extracting it's documentation.
+
+@component xp-doc-parser
+@description This component is used to parse an html or javascript file, extracting it's documentation.
+
+@dependency polymer Polymer/polymer#^0.5
+@dependency expandjs ExpandJS/expandjs
+@dependency xp-request ExpandJS/xp-request
+-->
+
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../expandjs/expandjs.html">
+<link rel="import" href="../xp-request/xp-request.html">
+
+<polymer-element name="xp-doc-parser" constructor="XPDocParserElement" attributes="data url">
+
+    <template>
+        <style>
+            :host {
+                display: none !important;
+            }
+        </style>
+        <xp-request url="{{url}}" on-xp-request-data="{{handleData}}" auto></xp-request>
+    </template>
+
+    <script>
+        XPComponent({
+
+            /**
+             * Parses the passed text.
+             *
+             * @method parse
+             * @param {string} [text = ""]
+             * @returns {Object}
+             */
+            parse: function (text) {
+
+                // Asserting
+                XP.assertArgument(XP.isVoid(text) || XP.isString(text), 1, 'string');
+
+                // Vars
+                var self         = this,
+                    regExpScript = '\\/\\*\\*([\\s\\S]*?)\\*\\/',
+                    regExpHtml   = '<!--([\\s\\S]*?)-->',
+                    regExp       = text ? new RegExp(regExpScript + '|' + regExpHtml, 'g') : null,
+                    blocks       = text ? XP.map(XP.match(text, regExp), function (block) { return self.parseBlock(block); }) : [],
+                    entity       = text ? XP.find(blocks, function (block) { return XP.includes(self.entities, block.type); }) : null;
+
+                // Interpreting
+                if (entity) { self.interpretEntity(entity, XP.pull(blocks, entity)); }
+
+                return entity || {type: 'Unknown', name: 'Unknown', summary: '**Undocumented**'};
+            },
+
+            /**
+             * Parses a comment block.
+             *
+             * @method parseBlock
+             * @param {string} block
+             * @returns {Object}
+             */
+            parseBlock: function (block) {
+
+                // Asserting
+                XP.assertArgument(XP.isString(block), 1, 'string');
+
+                // Preparing
+                block = block.replace(/\r\n/g, '\n'); // Unifies line ends
+                block = block.replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!-\-|^s*\-\->/gm, ''); // Removes all comment characters
+
+                // Vars
+                var lines  = block.split('\n'),
+                    result = {};
+
+                // Filtering
+                lines = XP.filter(lines, function (line) {
+
+                    // Vars
+                    var parts = XP.match(line, /\s*@(\w+)(.*)/);
+
+                    // Checking
+                    if (!parts.length) { return true; }
+
+                    // Setting
+                    if (result.pragma) {
+                        result.pragma.push({type: parts[1], value: XP.clean(parts[2]) || true});
+                    } else {
+                        result.type   = parts[1];
+                        result.name   = XP.clean(parts[2]);
+                        result.pragma = [];
+                    }
+                });
+
+                // Setting
+                result.type    = result.type || '';
+                result.name    = result.name || '';
+                result.summary = XP.trim(lines.join('\n'));
+
+                return result;
+            },
+
+            /*********************************************************************/
+
+            /**
+             * Returns the right interpreter name for a pragma.
+             *
+             * @method getInterpreter
+             * @param {string} [name = ""]
+             * @return {string | undefined}
+             * @private
+             */
+            getInterpreter: function (name) {
+                XP.assertArgument(XP.isVoid(name) || XP.isString(name), 1, 'string');
+                var self = this, result = 'interpret' + XP.capitalize(name);
+                return XP.isFunction(self[result]) ? result : undefined;
+            },
+
+            /*********************************************************************/
+
+            /**
+             * Interprets an entity.
+             *
+             * @method interpretEntity
+             * @param {Object} entity
+             * @param {Array} [features]
+             * @private
+             */
+            interpretEntity: function (entity, features) {
+
+                // Asserting
+                XP.assertArgument(XP.isObject(entity), 1, 'Object');
+                XP.assertArgument(XP.isVoid(features) || XP.isArrayable(features), 2, 'Arrayable');
+
+                // Vars
+                var self   = this,
+                    pragma = XP.withdraw(entity, 'pragma');
+
+                // Interpreting
+                XP.forEach(pragma || [], function (pragma) { XP.apply(self, self.getInterpreter(pragma.type) || 'interpretPragma', [entity, pragma]); });
+                XP.forEach(features || [], function (feature) { XP.apply(self, self.getInterpreter(feature.type) || 'interpretFeature', [entity, feature]); });
+            },
+
+            /**
+             * Interprets a feature.
+             *
+             * @method interpretFeature
+             * @param {Object} entity
+             * @param {Object} feature
+             * @private
+             */
+            interpretFeature: function (entity, feature) {
+
+                // Asserting
+                XP.assertArgument(XP.isObject(entity), 1, 'Object');
+                XP.assertArgument(XP.isObject(feature), 2, 'Object');
+
+                // Vars
+                var self   = this,
+                    name   = feature.name || XP.withdraw(feature, 'name'),
+                    pragma = XP.withdraw(feature, 'pragma'),
+                    type   = XP.withdraw(feature, 'type'),
+                    plural = self.plurals[type || ''];
+
+                // Checking
+                if (!type) { return; }
+
+                // Interpreting
+                XP.forEach(pragma || [], function (pragma) { XP.apply(self, self.getInterpreter(pragma.type) || 'interpretPragma', [feature, pragma]); });
+
+                // Filtering
+                if (XP.has(feature, 'private')) { return; }
+
+                // Setting
+                if (plural) {
+                    entity[plural] = entity[plural] || [];
+                    entity[plural].push(feature);
+                } else {
+                    entity[type] = feature;
+                }
+            },
+
+            /**
+             * Interprets a pragma.
+             *
+             * @method interpretPragma
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretPragma: function (context, pragma) {
+
+                // Asserting
+                XP.assertArgument(XP.isObject(context), 1, 'Object');
+                XP.assertArgument(XP.isObject(pragma), 2, 'Object');
+
+                // Vars
+                var self   = this,
+                    type   = XP.withdraw(pragma, 'type'),
+                    plural = self.plurals[type || ''];
+
+                // Setting
+                if (plural) {
+                    context[plural] = context[plural] || [];
+                    context[plural].push(pragma.value);
+                } else {
+                    context[type] = pragma.value;
+                }
+            },
+
+            /*********************************************************************/
+
+            /**
+             * Interprets a `dependency` pragma.
+             *
+             * @method interpretDependency
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretDependency: function (context, pragma) {
+
+                // Vars
+                var self  = this,
+                    parts = pragma.value.split(' ');
+
+                // Overriding
+                pragma.value = {
+                    name: XP.trim(parts[0]),
+                    url: XP.trim(parts[1])
+                };
+
+                // Super
+                self.interpretPragma(context, pragma);
+            },
+
+            /**
+             * Interprets a `devDependency` pragma.
+             *
+             * @method interpretDevDependency
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretDevDependency: function (context, pragma) {
+                this.interpretDependency(context, pragma);
+            },
+
+            /**
+             * Interprets an `extends` pragma.
+             *
+             * @method interpretExtends
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretExtends: function (context, pragma) {
+                this.interpretDependency(context, pragma);
+            },
+
+            /**
+             * Interprets a `mixin` pragma.
+             *
+             * @method interpretMixin
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretMixin: function (context, pragma) {
+                this.interpretDependency(context, pragma);
+            },
+
+            /**
+             * Interprets a `param` pragma.
+             *
+             * @method interpretParam
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretParam: function (context, pragma) {
+
+                // Vars
+                var self   = this,
+                    regExp = /\{(.+)\}\s+(\[.+\]|\w+\.\w+|\w+)\s*(.*)$/,
+                    parts1 = XP.match(pragma.value, regExp),
+                    parts2 = XP.split(XP.trim(parts1[2], '[]'), '=', true),
+                    parts3 = XP.split(XP.trim(parts2[0]), '.', true);
+
+                // Overriding
+                pragma.value = {
+                    type: XP.trim(parts1[1]),
+                    name: XP.trim(parts3[parts3.length > 1 ? 1 : 0]),
+                    summary: XP.trim(parts1[3]),
+                    optional: XP.startsWith(parts1[2], '['),
+                    default: XP.trim(parts2[1])
+                };
+
+                // Deleting
+                if (!pragma.value.optional) { delete pragma.value.optional; }
+                if (!pragma.value.default) { delete pragma.value.default; }
+
+                // Context
+                if (parts3.length > 1) { context = XP.findLast(context.params || [], {name: XP.trim(parts3[0])}) || {}; }
+
+                // Super
+                self.interpretPragma(context, pragma);
+            },
+
+            /**
+             * Interprets a `returns` pragma.
+             *
+             * @method interpretReturns
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            interpretReturns: function (context, pragma) {
+
+                // Vars
+                var self   = this,
+                    regExp = /\{(.+)\}\s*(.*)$/,
+                    parts  = pragma.value.match(regExp) || [];
+
+                // Overriding
+                pragma.value = {
+                    type: XP.trim(parts[1]),
+                    summary: XP.trim(parts[2])
+                };
+
+                // Super
+                self.interpretPragma(context, pragma);
+            },
+
+            /******************************************************************/
+
+            // PUBLISH
+            publish: {
+
+                /**
+                 * The documentation's data.
+                 *
+                 * @attribute data
+                 * @type *
+                 */
+                data: {reflect: false, value: null},
+
+                /**
+                 * The documentation's URL.
+                 *
+                 * @attribute url
+                 * @type string
+                 * @default ""
+                 */
+                url: {reflect: true, value: ''}
+            },
+
+            /**
+             * The entities list.
+             *
+             * @property entities
+             * @type Array
+             * @default ["class", "component", "function", "mixin", "module"]
+             * @readonly
+             */
+            entities: ['class', 'component', 'function', 'mixin', 'module'],
+
+            /**
+             * A map of the plural pragma.
+             *
+             * @property plurals
+             * @type Object
+             * @readonly
+             */
+            plurals: {
+                attribute: 'attributes',
+                dependency: 'dependencies',
+                devDependency: 'devDependencies',
+                event: 'events',
+                method: 'methods',
+                mixin: 'mixins',
+                param: 'params',
+                property: 'properties'
+            },
+
+            /*********************************************************************/
+
+            // HANDLER
+            handleData: function (event) {
+                this.data = this.parse(event.detail.data);
+            }
+        });
+    </script>
+
+</polymer-element>

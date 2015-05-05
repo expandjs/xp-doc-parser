@@ -1,7 +1,7 @@
 {
   "name": "xp-doc-parser",
   "license": "BSD-3-Clause",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "A custom element able to parse an html or javascript file, extracting it's documentation",
   "homepage": "http://www.expandjs.com/elements/xp-doc-parser",
   "authors": [

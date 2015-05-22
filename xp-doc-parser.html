@@ -294,7 +294,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 var self = this;
 
                 // Overriding
-                pragma.value = XP.map(XP.split(pragma.value, ','), function (keyword) { return XP.trim(keyword); });
+                pragma.value = XP.map(XP.split(pragma.value, ','), XP.ary(XP.trim, 1));
 
                 // Super
                 self.interpretPragma(context, pragma);

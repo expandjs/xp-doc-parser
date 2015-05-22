@@ -39,6 +39,17 @@ This element is used to parse an html or javascript file, extracting it's docume
         XPElement({
 
             /**
+             * Fired when data has been parsed.
+             *
+             * @event xp-doc-parse
+             * @param {Element} firer
+             * @param {Object} data
+             * @bubbles
+             */
+
+            /*********************************************************************/
+
+            /**
              * Parses the passed text.
              *
              * @method parse
@@ -398,7 +409,9 @@ This element is used to parse an html or javascript file, extracting it's docume
 
             // HANDLER
             handleData: function (event) {
-                this.data = this.parse(event.detail.data);
+                var self = this;
+                self.data = self.parse(event.detail.data);
+                self.fire('xp-doc-parse', {firer: self, data: self.data});
             }
         });
     </script>

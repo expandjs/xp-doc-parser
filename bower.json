@@ -23,8 +23,8 @@
     "**/.*"
   ],
   "dependencies": {
-    "expandjs": "ExpandJS/expandjs",
-    "xp-request": "ExpandJS/xp-request",
+    "expandjs": "ExpandJS/expandjs#alpha",
+    "xp-request": "ExpandJS/xp-request#alpha",
     "polymer": "Polymer/polymer#^0.5"
   }
 }

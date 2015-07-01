@@ -301,7 +301,7 @@ This element is used to parse an html or javascript file, extracting it's docume
             /**
              * Interprets a `keywords` pragma.
              *
-             * @method _interpretExtends
+             * @method _interpretKeywords
              * @param {Object} context
              * @param {Object} pragma
              * @private
@@ -378,6 +378,18 @@ This element is used to parse an html or javascript file, extracting it's docume
 
                 // Super
                 self._interpretPragma(context, pragma);
+            },
+
+            /**
+             * Interprets a `wraps` pragma.
+             *
+             * @method _interpretWraps
+             * @param {Object} context
+             * @param {Object} pragma
+             * @private
+             */
+            _interpretWraps: function (context, pragma) {
+                this._interpretDependency(context, pragma);
             },
 
             /******************************************************************/

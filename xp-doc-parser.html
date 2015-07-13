@@ -16,8 +16,8 @@ This element is used to parse an html or javascript file, extracting it's docume
 @homepage http://expandjs.com/elements/xp-doc-parser
 
 @dependency polymer Polymer/polymer#^1.0.0
-@dependency expandjs ExpandJS/expandjs#0.9.3
-@dependency xp-request ExpandJS/xp-request#0.9.3
+@dependency expandjs ExpandJS/expandjs#0.9.4
+@dependency xp-request ExpandJS/xp-request#0.9.4
 -->
 
 <link rel="import" href="../polymer/polymer.html">
@@ -312,7 +312,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 var self = this;
 
                 // Overriding
-                pragma.value = XP.map(XP.split(pragma.value, ','), XP.ary(XP.trim, 1));
+                pragma.value = XP.map(XP.split(pragma.value, ','), function (keyword) { return XP.trim(keyword); });
 
                 // Super
                 self._interpretPragma(context, pragma);
@@ -430,10 +430,10 @@ This element is used to parse an html or javascript file, extracting it's docume
              *
              * @property entities
              * @type Array
-             * @default ["behavior", "class", "element", "function", "module"]
+             * @default ["behavior", "class", "element", "function", "module", "object"]
              * @readonly
              */
-            entities: ['behavior', 'class', 'element', 'function', 'module'],
+            entities: ['behavior', 'class', 'element', 'function', 'module', 'object'],
 
             /**
              * A map of the plural pragma.

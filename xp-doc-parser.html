@@ -401,7 +401,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                  * The documentation's data.
                  *
                  * @attribute data
-                 * @type *
+                 * @type Object
                  * @notifies
                  * @readonly
                  */
@@ -409,6 +409,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                     notify: true,
                     observer: '_dataChanged',
                     readOnly: true,
+                    type: Object,
                     value: null
                 },
 
@@ -419,7 +420,6 @@ This element is used to parse an html or javascript file, extracting it's docume
                  * @type string
                  */
                 url: {
-                    reflectToAttribute: true,
                     type: String,
                     value: null
                 }

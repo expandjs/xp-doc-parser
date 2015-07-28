@@ -491,6 +491,19 @@ This element is used to parse an html or javascript file, extracting it's docume
                 },
 
                 /**
+                 * If set to true, the data are requested recursively.
+                 *
+                 * @attribute recursive
+                 * @type boolean
+                 * @default false
+                 */
+                recursive: {
+                    reflectToAttribute: true,
+                    type: Boolean,
+                    value: false
+                },
+
+                /**
                  * The documentation's URL.
                  *
                  * @attribute url
@@ -567,20 +580,22 @@ This element is used to parse an html or javascript file, extracting it's docume
                     parsers = [];
 
                 // Merging (extends)
-                if (data && data.extends && data.extends.url) {
+                if (self.recursive && data && data.extends && data.extends.url) {
                     parser = document.createElement('xp-doc-parser');
                     parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
                     parsers.push(XP.assign(parser, {inherited: true, url: data.extends.url}));
                 }
 
                 // Merging (behaviors)
-                XP.forEach(data && data.behaviors || [], function (behavior) {
-                    if (behavior.url) {
-                        parser = document.createElement('xp-doc-parser');
-                        parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
-                        parsers.push(XP.assign(parser, {inherited: true, url: behavior.url}));
-                    }
-                });
+                if (self.recursive && data && data.behaviors) {
+                    XP.forEach(data.behaviors, function (behavior) {
+                        if (behavior.url) {
+                            parser = document.createElement('xp-doc-parser');
+                            parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
+                            parsers.push(XP.assign(parser, {inherited: true, url: behavior.url}));
+                        }
+                    });
+                }
 
                 // Setting
                 if (!parsers.length) { self._setData(data && self.sort(data, true)); }

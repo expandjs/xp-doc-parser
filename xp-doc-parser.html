@@ -583,7 +583,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 if (self.recursive && data && data.extends && data.extends.url) {
                     parser = document.createElement('xp-doc-parser');
                     parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
-                    parsers.push(XP.assign(parser, {inherited: true, url: data.extends.url}));
+                    parsers.push(XP.assign(parser, {inherited: true, recursive: true, url: data.extends.url}));
                 }
 
                 // Merging (behaviors)
@@ -592,7 +592,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                         if (behavior.url) {
                             parser = document.createElement('xp-doc-parser');
                             parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
-                            parsers.push(XP.assign(parser, {inherited: true, url: behavior.url}));
+                            parsers.push(XP.assign(parser, {inherited: true, recursive: true, url: behavior.url}));
                         }
                     });
                 }

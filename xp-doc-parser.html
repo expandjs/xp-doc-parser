@@ -140,6 +140,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 lines = XP.filter(lines, function (line) {
 
                     // Vars
+                    console.log(line);
                     var parts = XP.match(line, /\s*@(\w+)(.*)/);
 
                     // Checking

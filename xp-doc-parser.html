@@ -17,8 +17,8 @@ This element is used to parse an html or javascript file, extracting it's docume
 @repository https://github.com/ExpandJS/xp-doc-parser
 
 @dependency polymer Polymer/polymer#^1.0.0
-@dependency expandjs ExpandJS/expandjs#0.9.5
-@dependency xp-request ExpandJS/xp-request#0.9.5
+@dependency expandjs ExpandJS/expandjs#0.9.6
+@dependency xp-request ExpandJS/xp-request#0.9.6
 -->
 
 <link rel="import" href="../polymer/polymer.html">
@@ -140,7 +140,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 lines = XP.filter(lines, function (line) {
 
                     // Vars
-                    var parts = XP.match(line, /\s*@(\w+)(.*)/);
+                    var parts = XP.match(line, /^@(\w+)(.*)|^\s*\*\s+@(\w+)(.*)/);
 
                     // Checking
                     if (!parts.length) { return true; }

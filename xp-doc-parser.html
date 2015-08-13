@@ -127,30 +127,41 @@ This element is used to parse an html or javascript file, extracting it's docume
                 // Asserting
                 XP.assertArgument(XP.isVoid(text) || XP.isString(text), 1, 'string');
 
+                var blockType = 'HTML',
+                    lines,
+                    result = {},
+                    helpers = {
+                        stripHTML: /^\s*<!-\-|^s*\-\->/gm,
+                        stripJS: /^\s*\/\*\*|^\s*\*\/|^\s*\*/gm,
+                        matchHTML: /^@(\w+)(.*)/,
+                        matchJS: /^\s*@(\w+)(.*)/
+                    };
+
                 // Preparing
                 text = text || '';
                 text = text.replace(/\r\n/g, '\n'); // Unifies line ends
-                text = text.replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!-\-|^s*\-\->/gm, ''); // Removes all comment characters
 
-                // Vars
-                var lines  = text.split('\n'),
-                    result = {};
+                if (/^\s*<!-\-/.test(text)) { blockType = 'HTML'; }
+                if (/^\s*\/\*\*/.test(text)) { blockType = 'JS' }
+
+                text  = text.replace(helpers['strip' + blockType], '');
+                lines = text.split('\n');
 
                 // Filtering
                 lines = XP.filter(lines, function (line) {
 
                     // Vars
-                    var parts = XP.match(line, /^@(\w+)(.*)|^\s+\s+@(\w+)(.*)/);
+                    var parts = XP.match(line, new RegExp(helpers['match' + blockType]));
 
                     // Checking
                     if (!parts.length) { return true; }
 
                     // Setting
                     if (result.pragma) {
-                        result.pragma.push({type: parts[1] || parts[3], value: XP.clean(parts[2] || parts[4]) || true});
+                        result.pragma.push({type: parts[1], value: XP.clean(parts[2]) || true});
                     } else {
-                        result.type   = parts[1] || parts[3];
-                        result.name   = XP.clean(parts[2] || parts[4]);
+                        result.type   = parts[1];
+                        result.name   = XP.clean(parts[2]);
                         result.pragma = [];
                     }
                 });

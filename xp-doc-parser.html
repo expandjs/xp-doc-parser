@@ -140,17 +140,17 @@ This element is used to parse an html or javascript file, extracting it's docume
                 lines = XP.filter(lines, function (line) {
 
                     // Vars
-                    var parts = XP.match(line, /^@(\w+)(.*)|^\s*\*\s+@(\w+)(.*)/);
+                    var parts = XP.match(line, /^@(\w+)(.*)|^\s+\s+@(\w+)(.*)/);
 
                     // Checking
                     if (!parts.length) { return true; }
 
                     // Setting
                     if (result.pragma) {
-                        result.pragma.push({type: parts[1], value: XP.clean(parts[2]) || true});
+                        result.pragma.push({type: parts[1] || parts[3], value: XP.clean(parts[2] || parts[4]) || true});
                     } else {
-                        result.type   = parts[1];
-                        result.name   = XP.clean(parts[2]);
+                        result.type   = parts[1] || parts[3];
+                        result.name   = XP.clean(parts[2] || parts[4]);
                         result.pragma = [];
                     }
                 });

@@ -27,14 +27,16 @@ This element is used to parse an html or javascript file, extracting it's docume
 
 <dom-module id="xp-doc-parser">
 
-    <style>
-        :host {
-            display: none !important;
-        }
-    </style>
-
     <template>
+
+        <style>
+            :host {
+                display: none !important;
+            }
+        </style>
+
         <xp-request url="[[url]]" on-data-changed="_handleData" auto></xp-request>
+
     </template>
 
     <script>
@@ -520,10 +522,10 @@ This element is used to parse an html or javascript file, extracting it's docume
              *
              * @property entities
              * @type Array
-             * @default ["behavior", "class", "element", "function", "module", "object"]
+             * @default ["behavior", "class", "element", "function", "module", "object", "stylesheet"]
              * @readonly
              */
-            entities: ['behavior', 'class', 'element', 'function', 'module', 'object'],
+            entities: ['behavior', 'class', 'element', 'function', 'module', 'object', 'stylesheet'],
 
             /**
              * The inheritance list.

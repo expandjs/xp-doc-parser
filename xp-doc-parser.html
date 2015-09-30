@@ -17,8 +17,8 @@ This element is used to parse an html or javascript file, extracting it's docume
 @repository https://github.com/ExpandJS/xp-doc-parser
 
 @dependency polymer Polymer/polymer#^1.1.0
-@dependency expandjs ExpandJS/expandjs#0.9.9
-@dependency xp-request ExpandJS/xp-request#0.9.9
+@dependency expandjs ExpandJS/expandjs#0.9.10
+@dependency xp-request ExpandJS/xp-request#0.9.10
 -->
 
 <link rel="import" href="../polymer/polymer.html">
@@ -482,6 +482,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                  *
                  * @attribute empty-data
                  * @type boolean
+                 * @default true
                  * @notifies
                  * @readonly
                  */
@@ -489,7 +490,8 @@ This element is used to parse an html or javascript file, extracting it's docume
                     computed: '_computeEmptyData(data)',
                     notify: true,
                     reflectToAttribute: true,
-                    type: Boolean
+                    type: Boolean,
+                    value: true
                 },
 
                 /**

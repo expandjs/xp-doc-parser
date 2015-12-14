@@ -7,18 +7,19 @@ The complete set of contributors may be found at https://expandjs.github.io/CONT
 -->
 
 <!--
-This element is used to parse an html or javascript file, extracting it's documentation.
+A custom element used to parse the documentation inside an html or javascript file.
 
 @element xp-doc-parser
-@description A custom element able to parse an html or javascript file, extracting it's documentation
-@keywords JSDoc, web app, html5, expandjs, web-components
+@description A custom element used to parse the documentation inside an html or javascript file
+@keywords JSDoc, expandjs, web app, custom elements, web-components
 @group functionality
+
 @homepage http://expandjs.com/elements/xp-doc-parser
 @repository https://github.com/ExpandJS/xp-doc-parser
 
-@dependency polymer Polymer/polymer#^1.1.0
-@dependency expandjs ExpandJS/expandjs#0.9.11
-@dependency xp-request ExpandJS/xp-request#0.9.11
+@dependency polymer Polymer/polymer#^1.2.0
+@dependency expandjs ExpandJS/expandjs#0.10.0
+@dependency xp-request ExpandJS/xp-request#0.10.0
 -->
 
 <link rel="import" href="../polymer/polymer.html">
@@ -27,7 +28,7 @@ This element is used to parse an html or javascript file, extracting it's docume
 
 <dom-module id="xp-doc-parser">
 
-    <template>
+    <template strip-whitespace>
 
         <style>
             :host {
@@ -59,40 +60,7 @@ This element is used to parse an html or javascript file, extracting it's docume
             /*********************************************************************/
 
             /**
-             * Merges the passed data with parsers data.
-             *
-             * @method merge
-             * @param {Object} data
-             * @param {Array} parsers
-             * @returns {Object}
-             */
-            merge: function (data, parsers) {
-
-                // Asserting
-                XP.assertArgument(XP.isObject(data), 1, 'Object');
-                XP.assertArgument(XP.isArray(parsers), 2, 'Array');
-
-                // Vars
-                var self = this;
-
-                // Merging
-                XP.forEachRight(parsers, function (parser) {
-
-                    // Inherited
-                    XP.forEach(self.inheritance, function (feature) {
-                        XP.forEach(parser.data[feature] || [], function (feat) {
-                            if (XP.find(data[feature] || [], {name: feat.name})) { return; }
-                            data[feature] = data[feature] || [];
-                            data[feature].push(feat);
-                        });
-                    });
-                });
-
-                return data;
-            },
-
-            /**
-             * Parses the passed text.
+             * Parses text.
              *
              * @method parse
              * @param {string} [text = ""]
@@ -109,7 +77,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                     regExpHtml   = '<!--([\\s\\S]*?)-->',
                     regExp       = text ? new RegExp(regExpScript + '|' + regExpHtml, 'g') : null,
                     blocks       = text ? XP.map(XP.match(text, regExp), function (block) { return self.parseBlock(block); }) : [],
-                    entity       = text ? XP.find(blocks, function (block) { return XP.includes(self.entities, block.type); }) : null;
+                    entity       = text ? XP.find(blocks, function (block) { return self.entities.indexOf(block.type) >= 0; }) : null;
 
                 // Interpreting
                 if (entity) { self._interpretEntity(entity, XP.pull(blocks, entity)); }
@@ -121,21 +89,21 @@ This element is used to parse an html or javascript file, extracting it's docume
              * Parses a comment block.
              *
              * @method parseBlock
-             * @param {string} [text = ""]
+             * @param {string} [block = ""]
              * @returns {Object}
              */
-            parseBlock: function (text) {
+            parseBlock: function (block) {
 
                 // Asserting
-                XP.assertArgument(XP.isVoid(text) || XP.isString(text), 1, 'string');
+                XP.assertArgument(XP.isVoid(block) || XP.isString(block), 1, 'string');
 
                 // Preparing
-                text = text || '';
-                text = text.replace(/\r\n/g, '\n'); // Unifies line ends
-                text = text.replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!-\-|^s*\-\->/gm, ''); // Removes all comment characters
+                block = block || '';
+                block = block.replace(/\r\n/g, '\n'); // Unifies line ends
+                block = block.replace(/^\s*\/\*\*|^\s*\*\/|^\s*\* ?|^\s*<!-\-|^s*\-\->/gm, ''); // Removes all comment characters
 
                 // Vars
-                var lines  = text.split('\n'),
+                var lines  = block.split('\n'),
                     result = {};
 
                 // Filtering
@@ -165,55 +133,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 return result;
             },
 
-            /**
-             * Sorts the passed data.
-             *
-             * @method sort
-             * @param {Object} data
-             * @param {boolean} [useful = false]
-             * @returns {Object}
-             */
-            sort: function (data, useful) {
-
-                // Asserting
-                XP.assertArgument(XP.isObject(data), 1, 'Object');
-
-                // Vars
-                var self = this;
-
-                // Checking
-                if (useful && self.inherited) { return data; }
-
-                // Sorting
-                XP.forEach(self.inheritance, function (feature) {
-                    if (data[feature]) {
-                        data[feature].sort(function (a, b) {
-                            if (!a.private && b.private) { return 1; }
-                            if (a.private && !b.private) { return -1; }
-                            if (a.name > b.name) { return 1; }
-                            if (a.name < b.name) { return -1; }
-                        });
-                    }
-                });
-
-                return data;
-            },
-
             /*********************************************************************/
-
-            /**
-             * Returns the right interpreter name for a pragma.
-             *
-             * @method _getInterpreter
-             * @param {string} [name = ""]
-             * @return {string | undefined}
-             * @private
-             */
-            _getInterpreter: function (name) {
-                XP.assertArgument(XP.isVoid(name) || XP.isString(name), 1, 'string');
-                var self = this, result = '_interpret' + XP.capitalize(name);
-                return XP.isFunction(self[result]) ? result : undefined;
-            },
 
             /**
              * Interprets an `adapts` pragma.
@@ -291,11 +211,11 @@ This element is used to parse an html or javascript file, extracting it's docume
 
                 // Vars
                 var self   = this,
-                        pragma = XP.withdraw(entity, 'pragma');
+                    pragma = XP.withdraw(entity, 'pragma');
 
                 // Interpreting
-                XP.forEach(pragma || [], function (pragma) { XP.apply(self, self._getInterpreter(pragma.type) || '_interpretPragma', [entity, pragma]); });
-                XP.forEach(features || [], function (feature) { XP.apply(self, self._getInterpreter(feature.type) || '_interpretFeature', [entity, feature]); });
+                XP.forEach(pragma || [], function (pragma) { XP.apply(self, self._computeInterpreter(pragma.type) || '_interpretPragma', [entity, pragma]); });
+                XP.forEach(features || [], function (feature) { XP.apply(self, self._computeInterpreter(feature.type) || '_interpretFeature', [entity, feature]); });
             },
 
             /**
@@ -335,7 +255,7 @@ This element is used to parse an html or javascript file, extracting it's docume
                 if (!type) { return; }
 
                 // Interpreting
-                XP.forEach(pragma || [], function (pragma) { XP.apply(self, self._getInterpreter(pragma.type) || '_interpretPragma', [feature, pragma]); });
+                XP.forEach(pragma || [], function (pragma) { XP.apply(self, self._computeInterpreter(pragma.type) || '_interpretPragma', [feature, pragma]); });
 
                 // Setting
                 if (plural) {
@@ -456,6 +376,74 @@ This element is used to parse an html or javascript file, extracting it's docume
                 self._interpretPragma(context, pragma);
             },
 
+            /**
+             * Merges the passed data with parsers data.
+             *
+             * @method _mergeData
+             * @param {Object} data
+             * @param {Array} parsers
+             * @returns {Object}
+             */
+            _mergeData: function (data, parsers) {
+
+                // Asserting
+                XP.assertArgument(XP.isObject(data), 1, 'Object');
+                XP.assertArgument(XP.isArray(parsers), 2, 'Array');
+
+                // Vars
+                var self = this;
+
+                // Merging
+                XP.forEachRight(parsers, function (parser) {
+
+                    // Inherited
+                    XP.forEach(self.inheritance, function (feature) {
+                        XP.forEach(parser.data[feature] || [], function (feat) {
+                            if (XP.find(data[feature] || [], {name: feat.name})) { return; }
+                            data[feature] = data[feature] || [];
+                            data[feature].push(feat);
+                        });
+                    });
+                });
+
+                return data;
+            },
+
+            /**
+             * Sorts the passed data.
+             *
+             * @method _sortData
+             * @param {Object} data
+             * @param {boolean} [useful = false]
+             * @returns {Object}
+             * @private
+             */
+            _sortData: function (data, useful) {
+
+                // Asserting
+                XP.assertArgument(XP.isObject(data), 1, 'Object');
+
+                // Vars
+                var self = this;
+
+                // Checking
+                if (useful && self.inherited) { return data; }
+
+                // Sorting
+                XP.forEach(self.inheritance, function (feature) {
+                    if (data[feature]) {
+                        data[feature].sort(function (a, b) {
+                            if (!a.private && b.private) { return 1; }
+                            if (a.private && !b.private) { return -1; }
+                            if (a.name > b.name) { return 1; }
+                            if (a.name < b.name) { return -1; }
+                        });
+                    }
+                });
+
+                return data;
+            },
+
             /******************************************************************/
 
             // PROPERTIES
@@ -473,21 +461,20 @@ This element is used to parse an html or javascript file, extracting it's docume
                     notify: true,
                     observer: '_dataChanged',
                     readOnly: true,
-                    type: Object,
-                    value: null
+                    type: Object
                 },
 
                 /**
                  * If set to true, the data are not ready yet.
                  *
-                 * @attribute empty-data
+                 * @attribute empty
                  * @type boolean
                  * @default true
                  * @notifies
                  * @readonly
                  */
-                emptyData: {
-                    computed: '_computeEmptyData(data)',
+                empty: {
+                    computed: '_computeEmpty(data)',
                     notify: true,
                     reflectToAttribute: true,
                     type: Boolean,
@@ -502,7 +489,6 @@ This element is used to parse an html or javascript file, extracting it's docume
                  * @default false
                  */
                 recursive: {
-                    reflectToAttribute: true,
                     type: Boolean,
                     value: false
                 },
@@ -514,14 +500,12 @@ This element is used to parse an html or javascript file, extracting it's docume
                  * @type string
                  */
                 url: {
-                    reflectToAttribute: true,
-                    type: String,
-                    value: null
+                    type: String
                 }
             },
 
             /**
-             * The entities list.
+             * The list of entities.
              *
              * @property entities
              * @type Array
@@ -531,7 +515,7 @@ This element is used to parse an html or javascript file, extracting it's docume
             entities: ['behavior', 'class', 'element', 'function', 'module', 'object', 'stylesheet'],
 
             /**
-             * The inheritance list.
+             * The list of inheritance.
              *
              * @property inheritance
              * @type Array
@@ -541,7 +525,7 @@ This element is used to parse an html or javascript file, extracting it's docume
             inheritance: ['attributes', 'events', 'methods', 'properties'],
 
             /**
-             * A map of the plural pragma.
+             * The map of plurals.
              *
              * @property plurals
              * @type Object
@@ -561,15 +545,32 @@ This element is used to parse an html or javascript file, extracting it's docume
             /*********************************************************************/
 
             // COMPUTER
-            _computeEmptyData: function (data) {
+            _computeEmpty: function (data) {
                 return !data;
+            },
+
+            // COMPUTER
+            _computeInterpreter: function (name) {
+                var self = this, result = '_interpret' + XP.capitalize(name);
+                return XP.isFunction(self[result]) ? result : undefined;
             },
 
             /*********************************************************************/
 
             // OBSERVER
-            _dataChanged: function (post) {
-                if (post && arguments.length > 1) { this.fire('xp-doc-parse', {firer: this, data: this.data}); }
+            _dataChanged: function () {
+
+                // Firing
+                if (this.data) { this.fire('xp-doc-parse', {firer: this, data: this.data}); }
+            },
+
+            /*********************************************************************/
+
+            // LISTENER
+            created: function () {
+
+                // Classifying
+                this.classList.add('parser');
             },
 
             /*********************************************************************/
@@ -587,23 +588,22 @@ This element is used to parse an html or javascript file, extracting it's docume
                 // Merging (extends)
                 if (self.recursive && data && data.extends && data.extends.url) {
                     parser = document.createElement('xp-doc-parser');
-                    parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
+                    parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self._sortData(self._mergeData(data, parsers), true)); } });
                     parsers.push(XP.assign(parser, {inherited: true, recursive: true, url: data.extends.url}));
                 }
 
                 // Merging (behaviors)
                 if (self.recursive && data && data.behaviors) {
-                    XP.forEach(data.behaviors, function (behavior) {
-                        if (behavior.url) {
-                            parser = document.createElement('xp-doc-parser');
-                            parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self.sort(self.merge(data, parsers), true)); } });
-                            parsers.push(XP.assign(parser, {inherited: true, recursive: true, url: behavior.url}));
-                        }
+                    data.behaviors.forEach(function (behavior) {
+                        if (!behavior.url) { return; }
+                        parser = document.createElement('xp-doc-parser');
+                        parser.addEventListener('xp-doc-parse', function () { if ((parsed += 1) === parsers.length) { self._setData(self._sortData(self._mergeData(data, parsers), true)); } });
+                        parsers.push(XP.assign(parser, {inherited: true, recursive: true, url: behavior.url}));
                     });
                 }
 
                 // Setting
-                if (!parsers.length) { self._setData(data && self.sort(data, true)); }
+                if (!parsers.length) { self._setData(data && self._sortData(data, true)); }
             }
         });
     </script>
